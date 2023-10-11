@@ -6,13 +6,19 @@
     android:layout_height="match_parent"
     tools:context=".ui.home.HomeFragment">
 
+    <TextureView
+        android:id="@+id/textureView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        tools:layout_editor_absoluteX="-26dp"
+        tools:layout_editor_absoluteY="0dp" />
 
     <TextView
         android:id="@+id/text_home"
@@ -33,6 +39,7 @@
         android:layout_width="110dp"
         android:layout_height="110dp"
         android:layout_marginLeft="148dp"
+        android:layout_marginEnd="50dp"
         android:layout_marginBottom="4dp"
         android:elevation="2dp"
         android:text="Take photo"

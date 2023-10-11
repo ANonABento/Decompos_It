@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.example.decomposeit"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
@@ -33,7 +33,6 @@ android {
     buildFeatures {
         viewBinding = true
     }
-
 }
 
 dependencies {
@@ -64,8 +63,6 @@ dependencies {
 
     implementation("androidx.camera:camera-view:$camerax_version")
     implementation("androidx.camera:camera-extensions:$camerax_version")
-
-    implementation ("com.google.mlkit:image-labeling:17.0.7")
 
 
 }
