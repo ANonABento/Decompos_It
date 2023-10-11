@@ -6,6 +6,7 @@ android {
     namespace = "com.example.decomposeit"
     compileSdk = 34
 
+
     defaultConfig {
         applicationId = "com.example.decomposeit"
         minSdk = 24
@@ -51,4 +52,17 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.0.0-beta01")
     implementation("androidx.camera:camera-lifecycle:1.0.0-beta01")
     implementation("androidx.camera:camera-view:1.0.0-alpha30")
+
+    //dependencies for cameraX api
+
+    val camerax_version = "1.2.2"
+    implementation("androidx.camera:camera-core:$camerax_version")
+    implementation("androidx.camera:camera-camera2:$camerax_version")
+    implementation("androidx.camera:camera-lifecycle:$camerax_version")
+    implementation("androidx.camera:camera-video:$camerax_version")
+
+    implementation("androidx.camera:camera-view:$camerax_version")
+    implementation("androidx.camera:camera-extensions:$camerax_version")
+
+
 }
