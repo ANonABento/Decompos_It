@@ -2,7 +2,9 @@ package com.example.decomposeit.ui.home;
 
 import android.Manifest;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -100,11 +102,6 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        // Get a stable reference of the modifiable image capture use case
-        if (this.imageCapture == null) {
-            return;
-        }
-
         // Create a time-stamped name and MediaStore entry
         String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis());
@@ -117,10 +114,16 @@ public class HomeFragment extends Fragment {
             contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image");
         }
 
+        // Insert a new record into the MediaStore and get the content URI
+        Uri uri = requireContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+
+        // Grant explicit URI permission
+        requireContext().grantUriPermission("com.android.providers.media.MediaProvider", uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
         // Create output options object which contains file + metadata
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(
                 requireContext().getContentResolver(),
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                uri,
                 contentValues)
                 .build();
 
