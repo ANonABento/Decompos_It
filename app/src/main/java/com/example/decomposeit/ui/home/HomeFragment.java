@@ -54,16 +54,26 @@ public class HomeFragment extends Fragment {
     private ExecutorService cameraExecutor;
     private static final String TAG = "HomeFragment";
     private FragmentHomeBinding binding;
+    private static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 1;
+    private static final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+    };
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
-        View root = binding.getRoot(); // Corrected this line
+        View root = binding.getRoot();
 
         // Request camera permissions
         if (allPermissionsGranted()) {
-            startCamera();
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+            } else {
+                // Permission already granted
+                startCamera();
+            }
         } else {
             requestPermissions();
         }
@@ -83,9 +93,15 @@ public class HomeFragment extends Fragment {
     }
 
     private void takePhoto(View view) {
+        Log.d(TAG, "takePhotoed");
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+            return;
+        }
+
         // Get a stable reference of the modifiable image capture use case
-        ImageCapture imageCapture = this.imageCapture;
-        if (imageCapture == null) {
+        if (this.imageCapture == null) {
             return;
         }
 
@@ -127,10 +143,13 @@ public class HomeFragment extends Fragment {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
 
         cameraProviderFuture.addListener(() -> {
-            // Used to bind the lifecycle of cameras to the lifecycle owner
-            ProcessCameraProvider cameraProvider;
             try {
-                cameraProvider = cameraProviderFuture.get();
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+
+                if (cameraProvider == null) {
+                    Toast.makeText(requireContext(), "Failed to initialize camera", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 // Initialize viewFinder from the existing binding object
                 PreviewView viewFinder = binding.viewFinder; // Use the existing binding object instead of inflating a new one
@@ -138,6 +157,11 @@ public class HomeFragment extends Fragment {
                 // Preview
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(viewFinder.getSurfaceProvider());
+
+                // ImageCapture
+                imageCapture = new ImageCapture.Builder()
+                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                        .build();
 
                 // Select back camera as a default
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
@@ -147,7 +171,7 @@ public class HomeFragment extends Fragment {
                     cameraProvider.unbindAll();
 
                     // Bind use cases to the camera
-                    cameraProvider.bindToLifecycle(getViewLifecycleOwner(), cameraSelector, preview);
+                    cameraProvider.bindToLifecycle(getViewLifecycleOwner(), cameraSelector, preview, imageCapture);
                 } catch (Exception exc) {
                     Log.e(TAG, "Use case binding failed", exc);
                 }
@@ -171,7 +195,7 @@ public class HomeFragment extends Fragment {
         permissionsToCheck.add(Manifest.permission.CAMERA);
         permissionsToCheck.add(Manifest.permission.RECORD_AUDIO);
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             permissionsToCheck.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
         }
 
@@ -202,11 +226,6 @@ public class HomeFragment extends Fragment {
                             }
                         }
                     });
-
-    private static final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
-    };
 
     private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
 }
