@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,8 +20,10 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.camera.core.Camera;
 import androidx.camera.core.CameraInfoUnavailableException;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.Preview;
@@ -29,7 +32,10 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.navigation.Navigation;
+
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +54,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements LifecycleOwner {
 
     private Button imageCaptureButton;
     private ImageCapture imageCapture;
@@ -69,9 +75,25 @@ public class HomeFragment extends Fragment {
         View root = binding.getRoot();
 
         // Request camera permissions
+//        if (allPermissionsGranted()) {
+//            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+//            } else {
+//                // Permission already granted
+//                startCamera();
+//            }
+//        } else {
+//            requestPermissions();
+//        }
+
         if (allPermissionsGranted()) {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+                } else {
+                    // Permission already granted
+                    startCamera();
+                }
             } else {
                 // Permission already granted
                 startCamera();
@@ -79,7 +101,6 @@ public class HomeFragment extends Fragment {
         } else {
             requestPermissions();
         }
-
         imageCaptureButton = root.findViewById(R.id.imageCaptureButton);
 
         imageCaptureButton.setOnClickListener(new View.OnClickListener() {
@@ -102,30 +123,25 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        // Create a time-stamped name and MediaStore entry
+        // Create a time-stamped name
         String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                 .format(System.currentTimeMillis());
 
+        // Define the collection where the image will be saved (Pictures/CameraX-Image)
+        String relativeLocation = Environment.DIRECTORY_PICTURES + File.separator + "CameraX-Image";
+
+        // Set up content values for the new image
         ContentValues contentValues = new ContentValues();
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-            contentValues.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Image");
-        }
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, relativeLocation);
 
         // Insert a new record into the MediaStore and get the content URI
-        Uri uri = requireContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+        Uri imageUri = requireContext().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
 
-        // Grant explicit URI permission
-        requireContext().grantUriPermission("com.android.providers.media.MediaProvider", uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-
-        // Create output options object which contains file + metadata
-        ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(
-                requireContext().getContentResolver(),
-                uri,
-                contentValues)
-                .build();
+        // Create output options object which contains the content URI
+        File outputFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), name + ".jpg");
+        ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(outputFile).build();
 
         // Set up image capture listener, which is triggered after the photo has been taken
         imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(requireContext()), new ImageCapture.OnImageSavedCallback() {
@@ -136,55 +152,111 @@ public class HomeFragment extends Fragment {
 
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-                String msg = "Photo capture succeeded: " + output.getSavedUri();
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+                Uri savedUri = output.getSavedUri();
+                if (savedUri != null) {
+                    String msg = "Photo capture succeeded: " + savedUri.toString();
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(requireContext(), "Photo capture succeeded, but the URI is null.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
+    }
+//----------------------------------------------------------------CORRECT VERSION--------------------------------------
+//    private void startCamera() {
+//        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
+//
+//        cameraProviderFuture.addListener(() -> {
+//            try {
+//                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+//
+//                if (cameraProvider == null) {
+//                    Toast.makeText(requireContext(), "Failed to initialize camera", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//
+//                // Initialize viewFinder from the existing binding object
+//                PreviewView viewFinder = binding.viewFinder; // Use the existing binding object instead of inflating a new one
+//
+//                // Preview
+//                Preview preview = new Preview.Builder().build();
+//                preview.setSurfaceProvider(viewFinder.getSurfaceProvider());
+//
+//                // ImageCapture
+//                imageCapture = new ImageCapture.Builder()
+//                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+//                        .build();
+//
+//                // Select back camera as a default
+//                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+//
+//                try {
+//                    // Unbind use cases before rebinding
+//                    cameraProvider.unbindAll();
+//
+//                    // Bind use cases to the camera
+//                    cameraProvider.bindToLifecycle(getViewLifecycleOwner(), cameraSelector, preview, imageCapture);
+//                } catch (Exception exc) {
+//                    Log.e(TAG, "Use case binding failed", exc);
+//                }
+//            } catch (ExecutionException | InterruptedException e) {
+//                e.printStackTrace();
+//            }
+//        }, ContextCompat.getMainExecutor(requireContext()));
+//    }
+
+    public interface LumaListener {
+        void onLumaCalculated(double luma);
     }
 
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
 
         cameraProviderFuture.addListener(() -> {
+            // Used to bind the lifecycle of cameras to the lifecycle owner
+            ProcessCameraProvider cameraProvider;
             try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-
-                if (cameraProvider == null) {
-                    Toast.makeText(requireContext(), "Failed to initialize camera", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Initialize viewFinder from the existing binding object
-                PreviewView viewFinder = binding.viewFinder; // Use the existing binding object instead of inflating a new one
-
-                // Preview
-                Preview preview = new Preview.Builder().build();
-                preview.setSurfaceProvider(viewFinder.getSurfaceProvider());
-
-                // ImageCapture
-                imageCapture = new ImageCapture.Builder()
-                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                        .build();
-
-                // Select back camera as a default
-                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-
-                try {
-                    // Unbind use cases before rebinding
-                    cameraProvider.unbindAll();
-
-                    // Bind use cases to the camera
-                    cameraProvider.bindToLifecycle(getViewLifecycleOwner(), cameraSelector, preview, imageCapture);
-                } catch (Exception exc) {
-                    Log.e(TAG, "Use case binding failed", exc);
-                }
+                cameraProvider = cameraProviderFuture.get();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
+                return;
             }
+
+            // Preview
+            Preview preview = new Preview.Builder()
+                    .build();
+            preview.setSurfaceProvider(binding.viewFinder.getSurfaceProvider());
+
+            imageCapture = new ImageCapture.Builder()
+                    .build();
+
+            ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                    .build();
+            imageAnalysis.setAnalyzer(cameraExecutor, new LuminosityAnalyzer(new LumaListener() {
+                @Override
+                public void onLumaCalculated(double luma) {
+                    Log.d(TAG, "Average luminosity: " + luma);
+                }
+            }));
+
+            // Select back camera as a default
+            CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+
+            try {
+                // Unbind use cases before rebinding
+                cameraProvider.unbindAll();
+
+                // Bind use cases to camera
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis);
+
+
+
+            } catch (Exception exc) {
+                Log.e(TAG, "Use case binding failed", exc);
+            }
+
         }, ContextCompat.getMainExecutor(requireContext()));
     }
-
-
 
 
 
