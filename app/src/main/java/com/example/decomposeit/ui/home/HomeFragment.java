@@ -297,13 +297,21 @@
                     .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
                         @Override
                         public void onSuccess(List<ImageLabel> labels) {
+                            //variables to store the label of the highest confidence
+                            String highestLabel;
+                            float highestConfidence = 0;
                             // Process labels inside this block
                             for (ImageLabel label : labels) {
                                 String text = label.getText();
                                 float confidence = label.getConfidence();
                                 int index = label.getIndex();
-                                // Do something with the label information
-                                // Log the detected label to Logcat
+                                //do something with the label information
+                                //detect which label is the algorithm most confident in
+                                if (confidence > highestConfidence) {
+                                    highestConfidence = confidence;
+                                    highestLabel = text;
+                                }
+                                //log the detected label
                                 Log.d(TAG, "Detected label: " + text + " (Confidence: " + confidence + ")");
                             }
                         }
@@ -314,7 +322,6 @@
                             // Handle the failure inside this block
                         }
                     });
-
         }
 
 
