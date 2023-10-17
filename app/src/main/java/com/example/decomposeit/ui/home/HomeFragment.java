@@ -16,6 +16,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -82,18 +83,6 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
-        // Request camera permissions
-        //        if (allPermissionsGranted()) {
-        //            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-        //                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
-        //            } else {
-        //                // Permission already granted
-        //                startCamera();
-        //            }
-        //        } else {
-        //            requestPermissions();
-        //        }
 
         if (allPermissionsGranted()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -187,48 +176,6 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
             return null;
         }
     }
-    //----------------------------------------------------------------CORRECT VERSION--------------------------------------
-    //    private void startCamera() {
-    //        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
-    //
-    //        cameraProviderFuture.addListener(() -> {
-    //            try {
-    //                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-    //
-    //                if (cameraProvider == null) {
-    //                    Toast.makeText(requireContext(), "Failed to initialize camera", Toast.LENGTH_SHORT).show();
-    //                    return;
-    //                }
-    //
-    //                // Initialize viewFinder from the existing binding object
-    //                PreviewView viewFinder = binding.viewFinder; // Use the existing binding object instead of inflating a new one
-    //
-    //                // Preview
-    //                Preview preview = new Preview.Builder().build();
-    //                preview.setSurfaceProvider(viewFinder.getSurfaceProvider());
-    //
-    //                // ImageCapture
-    //                imageCapture = new ImageCapture.Builder()
-    //                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-    //                        .build();
-    //
-    //                // Select back camera as a default
-    //                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-    //
-    //                try {
-    //                    // Unbind use cases before rebinding
-    //                    cameraProvider.unbindAll();
-    //
-    //                    // Bind use cases to the camera
-    //                    cameraProvider.bindToLifecycle(getViewLifecycleOwner(), cameraSelector, preview, imageCapture);
-    //                } catch (Exception exc) {
-    //                    Log.e(TAG, "Use case binding failed", exc);
-    //                }
-    //            } catch (ExecutionException | InterruptedException e) {
-    //                e.printStackTrace();
-    //            }
-    //        }, ContextCompat.getMainExecutor(requireContext()));
-    //    }
 
     public interface LumaListener {
         void onLumaCalculated(double luma);
@@ -260,9 +207,17 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
             imageAnalysis.setAnalyzer(cameraExecutor, new LuminosityAnalyzer(new LumaListener() {
                 @Override
                 public void onLumaCalculated(double luma) {
-                    //Log.d(TAG, "Average luminosity: " + luma);
+                    // Update the UI on the main thread
+                    requireActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            TextView textLumin = getView().findViewById(R.id.textLumin);
+                            textLumin.setText(""+luma);
+                        }
+                    });
                 }
             }));
+
 
             // Select back camera as a default
             CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
