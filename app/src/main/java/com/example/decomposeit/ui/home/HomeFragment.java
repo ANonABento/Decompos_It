@@ -79,7 +79,6 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
             Manifest.permission.RECORD_AUDIO
     };
 
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
@@ -115,7 +114,7 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
     }
 
     private void takePhoto(View view) {
-        Log.d(TAG, "takePhotoed");
+        Log.d("take photo", "takePhotoed");
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
@@ -156,15 +155,6 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                     String msg = "Photo capture succeeded: " + savedUri.toString();
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
 
-                    // Pass the image URI to the GalleryFragment
-                    Bundle bundle = new Bundle();
-                    bundle.putString("imageUri", savedUri.toString());
-                    GalleryFragment galleryFragment = new GalleryFragment();
-                    galleryFragment.setArguments(bundle);
-
-                    // Navigate to the GalleryFragment
-                    Navigation.findNavController(requireView()).navigate(R.id.action_homeFragment_to_galleryFragment);
-
                     // Create an InputImage from the saved image
                     InputImage image = createInputImage(savedUri);
 
@@ -173,6 +163,20 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                 } else {
                     Toast.makeText(requireContext(), "Photo capture succeeded, but the URI is null.", Toast.LENGTH_SHORT).show();
                 }
+
+                // Pass the image URI to the GalleryFragment
+                Bundle bundle = new Bundle();
+                if (savedUri != null) {
+                    bundle.putString("imageUri", savedUri.toString());
+                } else {
+                    Log.d("home pass", "Saved URI is null!");
+                }
+
+                // Log the URI being passed
+                Log.d("home pass", "Image URI passed to GalleryFragment: " + savedUri.toString());
+
+                // Navigate to the GalleryFragment
+                Navigation.findNavController(requireView()).navigate(R.id.action_homeFragment_to_galleryFragment, bundle);
             }
         });
     }
@@ -227,10 +231,10 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                                 if (textLumin != null) {
                                     textLumin.setText(String.valueOf(luma));
                                 } else {
-                                    Log.e(TAG, "textLumin TextView is null.");
+                                    Log.e("Lumin", "textLumin TextView is null.");
                                 }
                             } else {
-                                Log.e(TAG, "Fragment view is null.");
+                                Log.e("Lumin", "Fragment view is null.");
                             }
                         }
                     });
@@ -252,7 +256,7 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
 
 
             } catch (Exception exc) {
-                Log.e(TAG, "Use case binding failed", exc);
+                Log.e("case binding", "Use case binding failed", exc);
             }
 
         }, ContextCompat.getMainExecutor(requireContext()));
@@ -279,7 +283,7 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                             int index = label.getIndex();
                             // Do something with the label information
                             // Log the detected label to Logcat
-                            Log.d(TAG, "Detected label: " + text + " (Confidence: " + confidence + ")");
+                            Log.d("LABELS", "Detected label: " + text + " (Confidence: " + confidence + ")");
                         }
                     }
                 })
