@@ -17,29 +17,66 @@ public class GalleryFragment extends Fragment {
 
     private FragmentGalleryBinding binding;
     private RecyclerView recyclerView;
+    private GalleryAdapter galleryAdapter;
 
-   // public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    //    binding = FragmentGalleryBinding.inflate(inflater, container, false);
-//        View root = binding.getRoot();
-//
-//        recyclerView = root.findViewById(R.id.recyclerView); // Make sure you have a RecyclerView in your layout
-//        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-//
-//        // Create a list of ImageData (custom class representing images with captions)
-//        List<ImageData> imageDataList = createImageDataList();
-//
-//        galleryAdapter = new GalleryAdapter(imageDataList); // Create your custom adapter
-//        recyclerView.setAdapter(galleryAdapter);
-//
-//        // Set a click listener for items in the RecyclerView
-//        galleryAdapter.setOnItemClickListener(new GalleryAdapter.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(ImageData imageData) {
-//                // Handle item click (e.g., show the image and caption)
-//                // You can navigate to a detailed view, display a larger image, etc.
-//            }
-//        });
+    public static class ImageModel {
+        private String filePath;
 
-        //return root;
-  //  }
+        public ImageModel(String filePath) {
+            this.filePath = filePath;
+        }
+
+        public String getFilePath() {
+            return filePath;
+        }
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_gallery, container, false);
+        recyclerView = view.findViewById(R.id.recyclerView);
+        galleryAdapter = new GalleryAdapter(capturedImages); // Pass the list of captured images
+        recyclerView.setAdapter(galleryAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        return view;
+    }
+
+    public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
+        private List<ImageModel> imageList;
+
+        public GalleryAdapter(List<ImageModel> imageList) {
+            this.imageList = imageList;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_image, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            ImageModel imageModel = imageList.get(position);
+            // Load and display the image using an image loading library like Glide or Picasso.
+            // You can also use a custom ImageView to display the images.
+            // holder.imageView.setImageURI(Uri.parse(imageModel.getFilePath()));
+        }
+
+        @Override
+        public int getItemCount() {
+            return imageList.size();
+        }
+
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            // Define your ImageView here for displaying the image
+            // ImageView imageView;
+
+            public ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                // Initialize your ImageView here
+                // imageView = itemView.findViewById(R.id.imageView);
+            }
+        }
+    }
 }

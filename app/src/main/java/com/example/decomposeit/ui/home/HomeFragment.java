@@ -53,6 +53,7 @@ import com.example.decomposeit.databinding.ActivityMainBinding;
 import com.example.decomposeit.databinding.FragmentHomeBinding;
 import com.example.decomposeit.R;
 
+import com.example.decomposeit.ui.gallery.GalleryFragment;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -77,6 +78,7 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
     };
+    private List<GalleryFragment.ImageModel> capturedImages = new ArrayList<>();
 
 
     @Override
@@ -154,6 +156,10 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                 if (savedUri != null) {
                     String msg = "Photo capture succeeded: " + savedUri.toString();
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+
+                    // Add the saved image to the list
+                    GalleryFragment.ImageModel imageModel = new GalleryFragment.ImageModel(savedUri.toString());
+                    capturedImages.add(imageModel);
 
                     // Create an InputImage from the saved image
                     InputImage image = createInputImage(savedUri);
