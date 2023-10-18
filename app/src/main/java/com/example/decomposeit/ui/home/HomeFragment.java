@@ -9,6 +9,8 @@
     import android.os.Build;
     import android.os.Bundle;
     import android.os.Environment;
+    import android.os.Handler;
+    import android.os.Looper;
     import android.provider.MediaStore;
     import android.util.Log;
     import android.view.LayoutInflater;
@@ -27,6 +29,7 @@
     import androidx.camera.core.ImageAnalysis;
     import androidx.camera.core.ImageCapture;
     import androidx.camera.core.ImageCaptureException;
+    import androidx.camera.core.ImageProxy;
     import androidx.camera.core.Preview;
     import androidx.camera.lifecycle.ProcessCameraProvider;
     import androidx.camera.view.PreviewView;
@@ -77,24 +80,13 @@
                 Manifest.permission.RECORD_AUDIO
         };
 
-
+        //our while loop
         @Override
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             binding = FragmentHomeBinding.inflate(inflater, container, false);
             View root = binding.getRoot();
 
             // Request camera permissions
-    //        if (allPermissionsGranted()) {
-    //            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-    //                ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
-    //            } else {
-    //                // Permission already granted
-    //                startCamera();
-    //            }
-    //        } else {
-    //            requestPermissions();
-    //        }
-
             if (allPermissionsGranted()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -187,48 +179,7 @@
                 return null;
             }
         }
-    //----------------------------------------------------------------CORRECT VERSION--------------------------------------
-    //    private void startCamera() {
-    //        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
-    //
-    //        cameraProviderFuture.addListener(() -> {
-    //            try {
-    //                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-    //
-    //                if (cameraProvider == null) {
-    //                    Toast.makeText(requireContext(), "Failed to initialize camera", Toast.LENGTH_SHORT).show();
-    //                    return;
-    //                }
-    //
-    //                // Initialize viewFinder from the existing binding object
-    //                PreviewView viewFinder = binding.viewFinder; // Use the existing binding object instead of inflating a new one
-    //
-    //                // Preview
-    //                Preview preview = new Preview.Builder().build();
-    //                preview.setSurfaceProvider(viewFinder.getSurfaceProvider());
-    //
-    //                // ImageCapture
-    //                imageCapture = new ImageCapture.Builder()
-    //                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-    //                        .build();
-    //
-    //                // Select back camera as a default
-    //                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-    //
-    //                try {
-    //                    // Unbind use cases before rebinding
-    //                    cameraProvider.unbindAll();
-    //
-    //                    // Bind use cases to the camera
-    //                    cameraProvider.bindToLifecycle(getViewLifecycleOwner(), cameraSelector, preview, imageCapture);
-    //                } catch (Exception exc) {
-    //                    Log.e(TAG, "Use case binding failed", exc);
-    //                }
-    //            } catch (ExecutionException | InterruptedException e) {
-    //                e.printStackTrace();
-    //            }
-    //        }, ContextCompat.getMainExecutor(requireContext()));
-    //    }
+
 
         public interface LumaListener {
             void onLumaCalculated(double luma);
@@ -273,7 +224,23 @@
 
                     // Bind use cases to camera
                     cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis);
+                    // Set up analysis on each image frame
+                    imageAnalysis.setAnalyzer(cameraExecutor, new ImageAnalysis.Analyzer() {
+                        @androidx.camera.core.ExperimentalGetImage
+                        public void analyze(@NonNull ImageProxy image) {
+                            // Convert ImageProxy to InputImage
 
+                                // Convert ImageProxy to InputImage
+                                InputImage inputImage = InputImage.fromMediaImage(image.getImage(), image.getImageInfo().getRotationDegrees());
+
+                                // Process image with ML Kit
+                                processImageWithMLKit(inputImage);
+
+                                // Close the image to release resources
+                                image.close();
+
+                        }
+                    });
 
 
                 } catch (Exception exc) {
@@ -282,13 +249,6 @@
 
             }, ContextCompat.getMainExecutor(requireContext()));
 
-            // Create an instance of ImageLabeler
-            ImageLabeler labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS);
-            // Or, if you want to set a custom confidence threshold:
-            // ImageLabelerOptions options = new ImageLabelerOptions.Builder()
-            //     .setConfidenceThreshold(0.7f)
-            //     .build();
-            // ImageLabeler labeler = ImageLabeling.getClient(options);
         }
 
         private void processImageWithMLKit(InputImage image) {
