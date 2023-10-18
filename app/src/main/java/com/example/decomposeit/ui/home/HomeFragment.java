@@ -78,7 +78,6 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
     };
-    private List<GalleryFragment.ImageModel> capturedImages = new ArrayList<>();
 
 
     @Override
@@ -157,9 +156,14 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                     String msg = "Photo capture succeeded: " + savedUri.toString();
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
 
-                    // Add the saved image to the list
-                    GalleryFragment.ImageModel imageModel = new GalleryFragment.ImageModel(savedUri.toString());
-                    capturedImages.add(imageModel);
+                    // Pass the image URI to the GalleryFragment
+                    Bundle bundle = new Bundle();
+                    bundle.putString("imageUri", savedUri.toString());
+                    GalleryFragment galleryFragment = new GalleryFragment();
+                    galleryFragment.setArguments(bundle);
+
+                    // Navigate to the GalleryFragment
+                    Navigation.findNavController(requireView()).navigate(R.id.action_homeFragment_to_galleryFragment);
 
                     // Create an InputImage from the saved image
                     InputImage image = createInputImage(savedUri);
