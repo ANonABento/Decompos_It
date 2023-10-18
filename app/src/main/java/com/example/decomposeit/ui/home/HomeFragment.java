@@ -221,10 +221,20 @@ public class HomeFragment extends Fragment implements LifecycleOwner {
                     requireActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            TextView textLumin = getView().findViewById(R.id.textLumin);
-                            textLumin.setText(""+luma);
+                            View view = getView(); // Get the view reference
+                            if (view != null) {
+                                TextView textLumin = view.findViewById(R.id.textLumin);
+                                if (textLumin != null) {
+                                    textLumin.setText(String.valueOf(luma));
+                                } else {
+                                    Log.e(TAG, "textLumin TextView is null.");
+                                }
+                            } else {
+                                Log.e(TAG, "Fragment view is null.");
+                            }
                         }
                     });
+
                 }
             }));
 
