@@ -18,6 +18,7 @@
     import android.view.View;
     import android.view.ViewGroup;
     import android.widget.Button;
+    import android.widget.TextView;
     import android.widget.Toast;
     import androidx.activity.result.ActivityResultCallback;
     import androidx.activity.result.ActivityResultLauncher;
@@ -71,6 +72,8 @@
         private Button imageCaptureButton;
         private ImageCapture imageCapture;
         private TextureView viewFinder;
+
+        private TextView textView3;
         private ExecutorService cameraExecutor;
         private static final String TAG = "HomeFragment";
         private FragmentHomeBinding binding;
@@ -85,7 +88,8 @@
         public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             binding = FragmentHomeBinding.inflate(inflater, container, false);
             View root = binding.getRoot();
-
+            // Initialize textView3 by finding the view by its ID
+            textView3 = root.findViewById(R.id.textView3);  // Initialize textView3
             // Request camera permissions
             if (allPermissionsGranted()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -236,6 +240,8 @@
                                 // Process image with ML Kit
                                 processImageWithMLKit(inputImage);
 
+
+
                                 // Close the image to release resources
                                 image.close();
 
@@ -257,14 +263,28 @@
                     .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
                         @Override
                         public void onSuccess(List<ImageLabel> labels) {
-                            // Process labels inside this block
+                            // Find label with highest confidence
+                            ImageLabel highestConfidenceLabel = null;
+                            float highestConfidence = 0.0f;
                             for (ImageLabel label : labels) {
-                                String text = label.getText();
                                 float confidence = label.getConfidence();
-                                int index = label.getIndex();
+                                if (confidence > highestConfidence) {
+                                    highestConfidence = confidence;
+                                    highestConfidenceLabel = label;
+                                }
+                            }
+
+                            if (highestConfidenceLabel != null) {
+                                String text = highestConfidenceLabel.getText();
+                                float confidence = highestConfidenceLabel.getConfidence();
+                                int index = highestConfidenceLabel.getIndex();
                                 // Do something with the label information
-                                // Log the detected label to Logcat
-                                Log.d(TAG, "Detected label: " + text + " (Confidence: " + confidence + ")");
+                                // Log the label with highest confidence to Logcat
+                                Log.d(TAG, "Detected label with highest confidence: " + text + " (Confidence: " + confidence + ")");
+                                // Set the text of textView3 with the detected label
+                                textView3.setText("Detected: " + text);
+                            } else {
+                                // No labels detected
                             }
                         }
                     })
@@ -274,8 +294,9 @@
                             // Handle the failure inside this block
                         }
                     });
-
         }
+
+
 
 
 
