@@ -65,12 +65,13 @@
     import com.google.mlkit.vision.label.ImageLabeler;
     import com.google.mlkit.vision.label.ImageLabeling;
     import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
-
+// import statements all above
 
     public class HomeFragment extends Fragment implements LifecycleOwner {
-
+        // Declaration of variables needed
         private Button imageCaptureButton;
         private ImageCapture imageCapture;
+        private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
         private TextureView viewFinder;
         private String sentLabel;
         private TextView textView3;
@@ -106,12 +107,14 @@
             } else {
                 requestPermissions();
             }
+            // Reference the take photo button from UI
             imageCaptureButton = root.findViewById(R.id.imageCaptureButton);
 
+            // Wait until button is pressed
             imageCaptureButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    takePhoto(view);
+                    takePhoto(view); // When pressed, run this function
                 }
             });
 
@@ -123,6 +126,7 @@
         private void takePhoto(View view) {
             Log.d("take photo", "takePhotoed");
 
+            // Check device permissions
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
                 return;
@@ -132,7 +136,7 @@
             String name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US)
                     .format(System.currentTimeMillis());
 
-            // Define the collection where the image will be saved (Pictures/CameraX-Image)
+            // Define the location where the image will be saved (Pictures/CameraX-Image)
             String relativeLocation = Environment.DIRECTORY_PICTURES + File.separator + "CameraX-Image";
 
             // Set up content values for the new image
@@ -158,6 +162,7 @@
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
                 Uri savedUri = output.getSavedUri();
+                // If there is something in the URI
                 if (savedUri != null) {
                     String msg = "Photo capture succeeded: " + savedUri.toString();
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
@@ -195,6 +200,7 @@
         });
     }
 
+        //prepare the image for ml
         private InputImage createInputImage(Uri imageUri) {
             try {
                 Context context = requireContext();
@@ -205,7 +211,7 @@
             }
         }
 
-
+        // Callback to get luma values
         public interface LumaListener {
             void onLumaCalculated(double luma);
         }
@@ -223,7 +229,7 @@
                     return;
                 }
 
-                // Preview
+                // Preview section
                 Preview preview = new Preview.Builder()
                         .build();
                 preview.setSurfaceProvider(binding.viewFinder.getSurfaceProvider());
@@ -233,18 +239,21 @@
 
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                         .build();
+
+                // Lumin feature deemed unnecessary but cool to have so it's left in
                 imageAnalysis.setAnalyzer(cameraExecutor, new LuminosityAnalyzer(new LumaListener() {
                     @Override
                     public void onLumaCalculated(double luma) {
                         // Update the UI on the main thread
                         requireActivity().runOnUiThread(new Runnable() {
+                            // Run will always run
                             @Override
                             public void run() {
                                 View view = getView(); // Get the view reference
-                                if (view != null) {
-                                    TextView textLumin = view.findViewById(R.id.textLumin);
-                                    if (textLumin != null) {
-                                        textLumin.setText(String.valueOf(luma));
+                                if (view != null) { // If there is something in view
+                                    TextView textLumin = view.findViewById(R.id.textLumin); // Reference textView for lumin from UI
+                                    if (textLumin != null) { // Something in lumin
+                                        textLumin.setText(String.valueOf(luma)); // Set Ui to current calculated luminosity value
                                     } else {
                                         Log.e("Lumin", "textLumin TextView is null.");
                                     }
@@ -271,18 +280,13 @@
                         @androidx.camera.core.ExperimentalGetImage
                         public void analyze(@NonNull ImageProxy image) {
                             // Convert ImageProxy to InputImage
+                            InputImage inputImage = InputImage.fromMediaImage(image.getImage(), image.getImageInfo().getRotationDegrees());
 
-                                // Convert ImageProxy to InputImage
-                                InputImage inputImage = InputImage.fromMediaImage(image.getImage(), image.getImageInfo().getRotationDegrees());
+                            // Process image with ML Kit
+                            processImageWithMLKit(inputImage);
 
-                                // Process image with ML Kit
-                                processImageWithMLKit(inputImage);
-
-
-
-                                // Close the image to release resources
-                                image.close();
-
+                            // Close the image to release resources
+                            image.close();
                         }
                     });
 
@@ -301,7 +305,7 @@
                     .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
                         @Override
                         public void onSuccess(List<ImageLabel> labels) {
-                            // Find label with highest confidence
+                            // Find label with highest confidence using for loop
                             ImageLabel highestConfidenceLabel = null;
                             float highestConfidence = 0.0f;
                             for (ImageLabel label : labels) {
@@ -312,11 +316,11 @@
                                 }
                             }
 
+                            // If program is confident in anything, store those values
                             if (highestConfidenceLabel != null) {
                                 String text = highestConfidenceLabel.getText();
                                 float confidence = highestConfidenceLabel.getConfidence();
                                 int index = highestConfidenceLabel.getIndex();
-                                // Do something with the label information
                                 // Log the label with highest confidence to Logcat
                                 Log.d("Label", "Detected label with highest confidence: " + text + " (Confidence: " + confidence + ")");
                                 // Set the text of textView3 with the detected label
@@ -324,7 +328,7 @@
                                 // Store text into sentLabel
                                 sentLabel = text;
                             } else {
-                                // No labels detected
+                                // Log error message here if needed
                             }
                         }
                     })
@@ -339,11 +343,12 @@
 
 
 
-
+        // Launch popup for permissions
         private void requestPermissions() {
             activityResultLauncher.launch(REQUIRED_PERMISSIONS);
         }
 
+        // Check for permissions, either true or false
         private boolean allPermissionsGranted() {
             List<String> permissionsToCheck = new ArrayList<>();
             permissionsToCheck.add(Manifest.permission.CAMERA);
@@ -361,6 +366,7 @@
             return true;
         }
 
+        // For the popup that asks for permissions
         ActivityResultLauncher<String[]> activityResultLauncher =
                 registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
                         new ActivityResultCallback<Map<String, Boolean>>() {
@@ -380,7 +386,5 @@
                                 }
                             }
                         });
-
-
-        private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
     }
+//end :D

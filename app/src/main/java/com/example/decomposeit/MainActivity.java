@@ -29,18 +29,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Inflate the layout
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Set toolbar as the action bar
         setSupportActionBar(binding.appBarMain.toolbar);
 
+        // Reference drawer layout and navigation view
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each menu should be considered as top level destinations.
+        // Passing each menu ID as a set (because each menu should be considered as top level destinations)
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_home, R.id.nav_gallery)
                 .setOpenableLayout(drawer)
                 .build();
+
+        // Set up navigation
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
@@ -48,13 +53,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflate the menu, this adds items to the action bar if it is present
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onSupportNavigateUp() {
+        // Handle up navigation by navigating to the previous screen
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
@@ -64,8 +70,11 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
+        // If clicked popup from option button
         if (id == R.id.action_settings) {
+            // Display a popup with spooky message
             Toast.makeText(this, "You shouldn't have done that...", Toast.LENGTH_SHORT).show();
+            // Navigate to secret fragment
             NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
             navController.navigate(R.id.nav_secret);
             return true;

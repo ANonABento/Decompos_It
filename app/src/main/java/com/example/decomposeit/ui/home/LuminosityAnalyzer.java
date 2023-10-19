@@ -14,6 +14,7 @@ public class LuminosityAnalyzer implements ImageAnalysis.Analyzer {
         this.listener = listener;
     }
 
+    // Convert a ByteBuffer to array
     private byte[] toByteArray(ByteBuffer buffer) {
         buffer.rewind();    // Rewind the buffer to zero
         byte[] data = new byte[buffer.remaining()];
@@ -21,26 +22,34 @@ public class LuminosityAnalyzer implements ImageAnalysis.Analyzer {
         return data;        // Return the byte array
     }
 
+    // Called when image analysis is triggered
     @Override
     public void analyze(ImageProxy image) {
         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
         byte[] data = toByteArray(buffer);
+
+        // Convert the byte data to a list of integers
         List<Integer> pixels = new ArrayList<>();
         for (byte b : data) {
             pixels.add(b & 0xFF);
         }
+
+        // Calculate the average luminosity
         double luma = calculateAverage(pixels);
 
+        // Notify the listener now
         listener.onLumaCalculated(luma);
 
+        // Close image
         image.close();
     }
 
+    // Calculate the average from a list of integers
     private double calculateAverage(List<Integer> pixels) {
         double sum = 0;
         for (int pixel : pixels) {
             sum += pixel;
         }
-        return sum / pixels.size();
+        return sum / pixels.size(); // Return the average luminosity
     }
 }
