@@ -19,7 +19,9 @@ public class SecretFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_secret, container, false);
 
+        // Reference the image UI element
         ImageView imageView = rootView.findViewById(R.id.korone);
+        // Use Glide to show the GIF in an imageView
         Glide.with(this).load(R.drawable.inugami_korone).into(imageView);
 
         return rootView;
