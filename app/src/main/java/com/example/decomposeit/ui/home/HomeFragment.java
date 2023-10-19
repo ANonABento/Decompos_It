@@ -55,7 +55,69 @@
     import com.example.decomposeit.databinding.ActivityMainBinding;
     import com.example.decomposeit.databinding.FragmentHomeBinding;
     import com.example.decomposeit.R;
+import android.Manifest;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.TextureView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraInfoUnavailableException;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.navigation.Navigation;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.example.decomposeit.databinding.ActivityMainBinding;
+import com.example.decomposeit.databinding.FragmentHomeBinding;
+import com.example.decomposeit.R;
+
+import com.example.decomposeit.ui.gallery.GalleryFragment;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.common.InputImage;
+
+import com.google.mlkit.vision.label.ImageLabel;
+import com.google.mlkit.vision.label.ImageLabeler;
+import com.google.mlkit.vision.label.ImageLabeling;
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
     import com.google.android.gms.tasks.OnFailureListener;
     import com.google.android.gms.tasks.OnSuccessListener;
     import com.google.common.util.concurrent.ListenableFuture;
@@ -72,7 +134,6 @@
         private Button imageCaptureButton;
         private ImageCapture imageCapture;
         private TextureView viewFinder;
-
         private TextView textView3;
         private ExecutorService cameraExecutor;
         private static final String TAG = "HomeFragment";
@@ -121,7 +182,7 @@
         }
 
         private void takePhoto(View view) {
-            Log.d(TAG, "takePhotoed");
+            Log.d("take photo", "takePhotoed");
 
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
@@ -155,24 +216,38 @@
                     Toast.makeText(requireContext(), "Photo capture failed: " + exc.getMessage(), Toast.LENGTH_SHORT).show();
                 }
 
-                @Override
-                public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
-                    Uri savedUri = output.getSavedUri();
-                    if (savedUri != null) {
-                        String msg = "Photo capture succeeded: " + savedUri.toString();
-                        Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+            @Override
+            public void onImageSaved(@NonNull ImageCapture.OutputFileResults output) {
+                Uri savedUri = output.getSavedUri();
+                if (savedUri != null) {
+                    String msg = "Photo capture succeeded: " + savedUri.toString();
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
 
-                        // Create an InputImage from the saved image
-                        InputImage image = createInputImage(savedUri);
+                    // Create an InputImage from the saved image
+                    InputImage image = createInputImage(savedUri);
 
-                        // Now you can use 'image' for ML Kit Vision processing
-                        processImageWithMLKit(image);
-                    } else {
-                        Toast.makeText(requireContext(), "Photo capture succeeded, but the URI is null.", Toast.LENGTH_SHORT).show();
-                    }
+                    // Now you can use 'image' for ML Kit Vision processing
+                    processImageWithMLKit(image);
+                } else {
+                    Toast.makeText(requireContext(), "Photo capture succeeded, but the URI is null.", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }
+
+                // Pass the image URI to the GalleryFragment
+                Bundle bundle = new Bundle();
+                if (savedUri != null) {
+                    bundle.putString("imageUri", savedUri.toString());
+                } else {
+                    Log.d("home pass", "Saved URI is null!");
+                }
+
+                // Log the URI being passed
+                Log.d("home pass", "Image URI passed to GalleryFragment: " + savedUri.toString());
+
+                // Navigate to the GalleryFragment
+                Navigation.findNavController(requireView()).navigate(R.id.action_homeFragment_to_galleryFragment, bundle);
+            }
+        });
+    }
 
         private InputImage createInputImage(Uri imageUri) {
             try {
@@ -215,7 +290,24 @@
                 imageAnalysis.setAnalyzer(cameraExecutor, new LuminosityAnalyzer(new LumaListener() {
                     @Override
                     public void onLumaCalculated(double luma) {
-                        //Log.d(TAG, "Average luminosity: " + luma);
+                        // Update the UI on the main thread
+                        requireActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                View view = getView(); // Get the view reference
+                                if (view != null) {
+                                    TextView textLumin = view.findViewById(R.id.textLumin);
+                                    if (textLumin != null) {
+                                        textLumin.setText(String.valueOf(luma));
+                                    } else {
+                                        Log.e("Lumin", "textLumin TextView is null.");
+                                    }
+                                } else {
+                                    Log.e("Lumin", "Fragment view is null.");
+                                }
+                            }
+                        });
+
                     }
                 }));
 
