@@ -11,18 +11,15 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.decomposeit.R;
-import com.example.decomposeit.databinding.FragmentGalleryBinding;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
+
 import android.content.ContentResolver;
+import android.widget.TextView;
 
 public class GalleryFragment extends Fragment {
 
@@ -34,11 +31,17 @@ public class GalleryFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_gallery, container, false);
 
         ImageView imageView = root.findViewById(R.id.imageView);
+        TextView textLabel = root.findViewById(R.id.textLabel);
+        TextView textDecomp = root.findViewById(R.id.textDecomp);
+        TextView textNotes = root.findViewById(R.id.textNotes);
 
         // Retrieve the image URI from the arguments
         Bundle bundle = requireArguments();
+        String sentLabel = null;
         if (bundle != null) {
             String imageUriString = bundle.getString("imageUri");
+            sentLabel = bundle.getString("sentLabel");
+
             if (imageUriString != null) {
                 // Load the image into the ImageView using the image URI
                 Uri imageUri = Uri.parse(imageUriString);
@@ -68,16 +71,61 @@ public class GalleryFragment extends Fragment {
                 Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true);
 
                 imageView.setImageBitmap(resizedBitmap);
-            }
-            else {
+            } else {
                 Log.d("gallery receiver", "Null imageUriString!");
             }
-        }
-        else {
+
+            if (sentLabel != null) {
+                textLabel.setText("Label: " + sentLabel);
+                Log.d("gallery receiver", "Received label: " + sentLabel);
+            } else {
+                Log.d("gallery receiver", "Null sentLabel!");
+            }
+        } else {
             Log.d("gallery receiver", "Null Bundle!");
         }
 
+        // Display decomp time
+        String decompTime = findDecompTime(sentLabel);
+        textDecomp.setText("Decomposition Time: " + decompTime);
+        // Display decomp notes
+        String decompNotes = findDecompNotes(sentLabel);
+        textNotes.setText("" + decompNotes);
 
         return root;
+    }
+
+    private String arrTimes[][] = {
+            {"glasses", "Several centuries to millennia", "Factors include materials used (plastic, metal, glass), exposure to environmental elements, and disposal methods."},
+            {"hand", "Several years to several decades", "Factors include environmental conditions, temperature, moisture, presence of scavengers, and burial depth."},
+            {"paper", "2 - 5 months", "Factors include paper type (coated or uncoated), moisture, temperature, and microbial activity."}
+    };
+
+    String findDecompTime(String label){
+        String decompTime = null;
+        for (int i = 0; i <= arrTimes.length; i++) {
+            if (arrTimes[i][0].equals(label.toLowerCase())) {
+                decompTime = arrTimes[i][1];
+                break;
+            }
+        }
+        if (decompTime.equals(null)){
+            decompTime = "Undefined";
+        }
+        return decompTime;
+    }
+
+    String findDecompNotes(String label){
+        String decompNotes = null;
+        for (int i = 0; i <= arrTimes.length; i++) {
+            if (arrTimes[i][0].equals(label.toLowerCase())) {
+                decompNotes = arrTimes[i][2];
+                break;
+            }
+        }
+        if (decompNotes.equals(null)){
+            decompNotes = "No information found.";
+        }
+        return decompNotes;
     }
 }

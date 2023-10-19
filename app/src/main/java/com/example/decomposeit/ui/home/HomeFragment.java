@@ -55,69 +55,7 @@
     import com.example.decomposeit.databinding.ActivityMainBinding;
     import com.example.decomposeit.databinding.FragmentHomeBinding;
     import com.example.decomposeit.R;
-import android.Manifest;
-import android.content.ContentValues;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.TextureView;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
-import android.widget.Toast;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.camera.core.Camera;
-import androidx.camera.core.CameraInfoUnavailableException;
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.Preview;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.navigation.Navigation;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import com.example.decomposeit.databinding.ActivityMainBinding;
-import com.example.decomposeit.databinding.FragmentHomeBinding;
-import com.example.decomposeit.R;
-
-import com.example.decomposeit.ui.gallery.GalleryFragment;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.mlkit.vision.common.InputImage;
-
-import com.google.mlkit.vision.label.ImageLabel;
-import com.google.mlkit.vision.label.ImageLabeler;
-import com.google.mlkit.vision.label.ImageLabeling;
-import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
     import com.google.android.gms.tasks.OnFailureListener;
     import com.google.android.gms.tasks.OnSuccessListener;
     import com.google.common.util.concurrent.ListenableFuture;
@@ -134,6 +72,7 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
         private Button imageCaptureButton;
         private ImageCapture imageCapture;
         private TextureView viewFinder;
+        private String sentLabel;
         private TextView textView3;
         private ExecutorService cameraExecutor;
         private static final String TAG = "HomeFragment";
@@ -238,6 +177,13 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
                     bundle.putString("imageUri", savedUri.toString());
                 } else {
                     Log.d("home pass", "Saved URI is null!");
+                }
+                // Pass
+                if (sentLabel != null) {
+                    bundle.putString("sentLabel", sentLabel);
+                    Log.d("sentLabel", "Sent: " + sentLabel);
+                }else {
+                    Log.d("home pass", "Label is null!");
                 }
 
                 // Log the URI being passed
@@ -372,9 +318,11 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
                                 int index = highestConfidenceLabel.getIndex();
                                 // Do something with the label information
                                 // Log the label with highest confidence to Logcat
-                                Log.d(TAG, "Detected label with highest confidence: " + text + " (Confidence: " + confidence + ")");
+                                Log.d("Label", "Detected label with highest confidence: " + text + " (Confidence: " + confidence + ")");
                                 // Set the text of textView3 with the detected label
                                 textView3.setText("Detected: " + text);
+                                // Store text into sentLabel
+                                sentLabel = text;
                             } else {
                                 // No labels detected
                             }
