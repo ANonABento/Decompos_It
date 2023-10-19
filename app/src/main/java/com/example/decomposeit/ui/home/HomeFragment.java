@@ -150,7 +150,7 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
             binding = FragmentHomeBinding.inflate(inflater, container, false);
             View root = binding.getRoot();
             // Initialize textView3 by finding the view by its ID
-            textView3 = root.findViewById(R.id.textView3);  // Initialize textView3
+            textView3 = root.findViewById(R.id.textPreviewLabel);
             // Request camera permissions
             if (allPermissionsGranted()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
