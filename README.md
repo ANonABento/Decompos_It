@@ -1,6 +1,24 @@
-# Decompos_It
-App for ICS4U's environmental assignment
+!! READ_MEs IN PROGRESS !!
+# Decompos_It : App for ICS4U's environmental assignment
 
+![GitHub license](https://img.shields.io/github/license/yourusername/your-repo)
+
+## Description
 This app was created to spread awareness to the public about the items they are using and how long it will take to decompose in the environment. We hope this app will make people more open-minded and knowledgeable about the everyday items we use.
 
 A mobile application made in Android Studio that allows users to capture photos using their device's camera and perform real-time image labeling with ML Kit. After taking a photo, it displays the image, what the program thinks the item is, decomposition time, and notes.
+
+![Demo Screenshot](screenshot.png)
+
+---
+
+## Features
+- **number 1**: a
+---
+
+## Technologies Used
+- **Frontend**: a
+- **Backend**: a
+- **Database**: a
+- **Authentication**: a
+- **Deployment**: a
