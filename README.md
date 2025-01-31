@@ -1,5 +1,6 @@
 !! READ_MEs IN PROGRESS !!
-# Decompos_It : App for ICS4U's environmental assignment
+# Decompos_It
+## App for ICS4U's environmental assignment
 
 ![GitHub license](https://img.shields.io/github/license/yourusername/your-repo)
 
