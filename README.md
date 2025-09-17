@@ -1,8 +1,6 @@
 # Decompos_It
 ## App for ICS4U's environmental assignment
 
-![GitHub license](https://img.shields.io/github/license/yourusername/your-repo)
-
 ## Description
 This app was created to spread awareness to the public about the items they are using and how long it will take to decompose in the environment. We hope this app will make people more open-minded and knowledgeable about the everyday items we use.
 
